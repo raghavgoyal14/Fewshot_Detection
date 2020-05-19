@@ -10,12 +10,43 @@ from torchvision import transforms
 from PIL import Image
 from utils import read_truths_args, read_truths, is_dict
 from image import *
-from cfg import cfg
+# from cfg import cfg
 from collections import defaultdict
 import pdb
 
+
 def topath(p):
-    return p.replace('scratch', 'tmp_scratch/basilisk')
+    # voc
+    p = p.replace(
+        '/home/bykang/voc/voclist',
+        '/scratch/hdd001/home/rgoyal/Fewshot_Detection/data/vocsplit'
+    )
+    p = p.replace('/scratch/bykang/datasets/VOCdevkit',
+                  '/scratch/ssd001/home/rgoyal/data/VOC/VOCdevkit'
+                  )
+
+    # coco
+    p = p.replace(
+        '/home/bykang/coco/cocolist',
+        '/scratch/hdd001/home/rgoyal/Fewshot_Detection/data/cocosplit'
+    )
+    p = p.replace(
+        '/scratch/bykang/coco/cocolist',
+        '/scratch/hdd001/home/rgoyal/Fewshot_Detection/data/cocosplit'
+    )
+    p = p.replace(
+        '/scratch/bykang/coco/labels',
+        '/h/rgoyal/data/MSCOCO/labels'
+    )
+    p = p.replace(
+        '/scratch/bykang/coco/images',
+        '/h/rgoyal/data/MSCOCO/images'
+    )
+    # p = p.replace('/scratch/bykang/datasets/VOCdevkit',
+    #               '/scratch/ssd001/home/rgoyal/data/VOC/VOCdevkit'
+    #               )
+    return p
+
 
 def loadlines(root, checkvalid=True):
     if is_dict(root):
@@ -62,14 +93,15 @@ def build_dataset(dataopt):
     # Base training dataset
     if not cfg.tuning:
         return loadlines(dataopt['train'])
-
     # Meta tuning dataset
     if cfg.repeat == 1:
         return loadlines(dataopt['meta'])
     else:
         if 'dynamic' not in dataopt or int(dataopt['dynamic']) == 0:
-            return loadlines(dataopt['meta']) * cfg.repeat
+            return loadlines(dataopt['meta']) * cfg.repeat  # for fine-tuning step
         else:
+            # I guess this is where mixing of meta and train is done which is
+            # presumably controlled by `dynamic` parameter
             metalist, metacnt = load_metadict(dataopt['meta'], cfg.repeat)
             return build_fewset(dataopt['train'], metalist, metacnt, cfg.shot*cfg.repeat) 
 
@@ -180,7 +212,6 @@ class listDataset(Dataset):
             batch_size=64,
             num_workers=4):
         self.train = train
-
         if isinstance(root, list):
             self.lines = root
         elif is_dict(root):
@@ -250,7 +281,8 @@ class listDataset(Dataset):
         exposure = 1.5
 
         labpath = listDataset.get_labpath(imgpath)
-        img, label = load_data_detection(imgpath, labpath, self.shape, jitter, hue, saturation, exposure, data_aug=self.train)
+        img, label = load_data_detection(
+            imgpath, labpath, self.shape, jitter, hue, saturation, exposure, data_aug=self.train)
         label = torch.from_numpy(label)
 
         if self.transform is not None:
@@ -272,6 +304,10 @@ class listDataset(Dataset):
 
     @staticmethod
     def is_valid(imgpath):
+        """
+        returns True if sample image contains an overlapping bbox
+        with base classes
+        """
         labpath = listDataset.get_labpath(imgpath.rstrip())
         if os.path.getsize(labpath):
             bs = np.loadtxt(labpath)
@@ -324,7 +360,6 @@ class MetaDataset(Dataset):
                 metafiles.append(pair)
             # metafiles = [tuple(line.rstrip().split()) for line in f.readlines()]
             metafiles = {k: topath(v) for k, v in metafiles}
-
             self.metalines = [[]] * len(self.classes)
             for i, clsname in enumerate(self.classes):
                 with open(metafiles[clsname], 'r') as imgf:

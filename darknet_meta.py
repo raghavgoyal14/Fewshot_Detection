@@ -106,6 +106,7 @@ class Darknet(nn.Module):
 
     def meta_forward(self, metax, mask):
         # Get weights from learnet
+        import ipdb; ipdb.set_trace()
         done_split = False
         for i in range(int(self.learnet_blocks[0]['feat_layer'])):
             if i == 0 and metax.size(1) == 6:

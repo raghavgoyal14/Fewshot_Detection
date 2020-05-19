@@ -5,11 +5,11 @@ import numpy as np
 import pdb
 from os import path
 
-root = '/scratch/bykang/coco/cocolist'
-validfile = '/scratch/bykang/coco/5k.txt'
-trainfile = '/scratch/bykang/coco/trainvalno5k.txt'
-validdir = '/scratch/bykang/coco/images/val2014'
-traindir = '/scratch/bykang/coco/images/train2014'
+root = '/h/rgoyal/data/MSCOCO/cocolist'
+validfile = '/h/rgoyal/data/MSCOCO/5k.txt'
+trainfile = '/h/rgoyal/data/MSCOCO/trainvalno5k.txt'
+validdir = '/h/rgoyal/data/MSCOCO/images/val2014'
+traindir = '/h/rgoyal/data/MSCOCO/images/train2014'
 few_nums = [50]
 
 def load_classes(data='voc'):
@@ -377,6 +377,7 @@ def gen_traindict():
 
     pdb.set_trace()
     for ci, c in enumerate(classes):
+        
         print('{} {}'.format(c, path.join(root, 'full_{}_train.txt'.format(c))))
         with open(path.join(root, 'full_{}_train.txt'.format(c)), 'w') as f:
             for ipath in cls_lists[ci]:
@@ -413,11 +414,11 @@ def gen_trainvaldict(trainfile=trainfile):
 
 if __name__ == '__main__':
     # gen_trainvaldict()
-    # gen_traindict()
+    gen_traindict()
     # gen_label1c(fullset=True, traindir=traindir)
     # gen_label1c(fullset=True, traindir=validdir)
     # gen_bbox_fewlist()
-    gen_bbox_fewlist_fullcoco()
+    # gen_bbox_fewlist_fullcoco()
     # novels = load_coconovels()
     # l = get_bbox_fewlist(traindir, 10, voc_classes + novels[1])
     # print([len(ll) for ll in l])

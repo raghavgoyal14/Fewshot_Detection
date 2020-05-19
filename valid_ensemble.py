@@ -24,10 +24,6 @@ def valid(datacfg, darknetcfg, learnetcfg, weightfile, outfile, use_baserw=False
     # prefix = 'results/' + weightfile.split('/')[1]
     # names = load_class_names(name_list)
 
-    with open(valid_images) as fp:
-        tmp_files = fp.readlines()
-        valid_files = [item.rstrip() for item in tmp_files]
-    
     m = Darknet(darknetcfg, learnetcfg)
     m.print_network()
     m.load_weights(weightfile)

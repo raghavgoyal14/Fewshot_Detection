@@ -7,22 +7,16 @@ if len(sys.argv) != 5:
 
 import time
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-import torch.backends.cudnn as cudnn
-from torchvision import datasets, transforms
+from torchvision import transforms
 from torch.autograd import Variable
 
 import dataset
-import random
 import math
 import os
 from utils import *
 from cfg import parse_cfg, cfg
 from darknet_meta import Darknet
-from models.tiny_yolo import TinyYoloNet
-import pdb
 
 # Training settings
 datacfg       = sys.argv[1]
@@ -102,7 +96,9 @@ max_epochs        = int(math.ceil(cfg.max_epoch*1./cfg.repeat)) if cfg.tuning el
 print(cfg.repeat, nsamples, max_batches, batch_size)
 print(num_workers)
 
-kwargs = {'num_workers': num_workers, 'pin_memory': True} if use_cuda else {}
+kwargs = {'num_workers': num_workers, 'pin_memory': False} if use_cuda else {}
+"""
+# Commenting this out since the test() is also commented
 test_loader = torch.utils.data.DataLoader(
     dataset.listDataset(testlist, shape=(init_width, init_height),
                    shuffle=False,
@@ -110,15 +106,17 @@ test_loader = torch.utils.data.DataLoader(
                        transforms.ToTensor(),
                    ]), train=False),
     batch_size=batch_size, shuffle=False, **kwargs)
-
+"""
 test_metaset = dataset.MetaDataset(metafiles=metadict, train=True)
+"""
 test_metaloader = torch.utils.data.DataLoader(
     test_metaset,
     batch_size=test_metaset.batch_size,
     shuffle=False,
     num_workers=num_workers//2,
-    pin_memory=True
+    pin_memory=False
 )
+"""
 
 # Adjust learning rate
 factor = len(test_metaset.classes)
@@ -188,7 +186,7 @@ def train(epoch):
         batch_size=metaset.batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=False
     )
     metaloader = iter(metaloader)
 
@@ -215,6 +213,7 @@ def train(epoch):
         t4 = time.time()
         optimizer.zero_grad()
         t5 = time.time()
+        import ipdb; ipdb.set_trace()
         output = model(data, metax, mask)
         t6 = time.time()
         region_loss.seen = region_loss.seen + data.data.size(0)
